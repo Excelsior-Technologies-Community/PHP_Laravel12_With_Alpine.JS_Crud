@@ -7,9 +7,26 @@ use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::latest()->get();
+        $query = Post::query();
+
+        // 🔍 Search (title + description)
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->search . '%')
+                    ->orWhere('description', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        // ✅ Status Filter (Active / Inactive)
+        if ($request->status !== null && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        // 📊 Order
+        $posts = $query->orderBy('id', 'asc')->paginate(5);
+
         return view('posts.index', compact('posts'));
     }
 
@@ -66,10 +83,28 @@ class PostController extends Controller
 
     public function destroy($id)
     {
-        $post = Post::findOrFail($id);
-        $post->delete();
+        Post::findOrFail($id)->delete();
+        return back()->with('success', 'Post moved to trash');
+    }
 
-        return redirect()->route('posts.index')
-            ->with('success', 'Post deleted successfully');
+    public function toggleStatus($id)
+    {
+        $post = Post::findOrFail($id);
+        $post->status = !$post->status;
+        $post->save();
+
+        return back();
+    }
+
+    public function trash()
+    {
+        $posts = Post::onlyTrashed()->get();
+        return view('posts.trash', compact('posts'));
+    }
+
+    public function restore($id)
+    {
+        Post::withTrashed()->findOrFail($id)->restore();
+        return back()->with('success', 'Post restored');
     }
 }
