@@ -7,6 +7,8 @@ use App\Http\Controllers\PostController;
 Route::get('/posts/trash', [PostController::class, 'trash'])->name('posts.trash');
 Route::get('/posts/restore/{id}', [PostController::class, 'restore'])->name('posts.restore');
 Route::get('/posts/toggle/{id}', [PostController::class, 'toggleStatus'])->name('posts.toggle');
+// Inline edit route
+Route::patch('/posts/{post}/inline-update', [App\Http\Controllers\PostController::class, 'inlineUpdate'])->name('posts.inline-update');
 
 // Resource route LAST
 Route::resource('posts', PostController::class);

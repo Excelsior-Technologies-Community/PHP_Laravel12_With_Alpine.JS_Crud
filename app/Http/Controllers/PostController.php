@@ -11,7 +11,6 @@ class PostController extends Controller
     {
         $query = Post::query();
 
-        // 🔍 Search (title + description)
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('title', 'like', '%' . $request->search . '%')
@@ -19,12 +18,10 @@ class PostController extends Controller
             });
         }
 
-        // ✅ Status Filter (Active / Inactive)
         if ($request->status !== null && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
-        // 📊 Order
         $posts = $query->orderBy('id', 'asc')->paginate(5);
 
         return view('posts.index', compact('posts'));
@@ -79,6 +76,24 @@ class PostController extends Controller
 
         return redirect()->route('posts.index')
             ->with('success', 'Post updated successfully');
+    }
+
+    public function inlineUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255'
+        ]);
+
+        $post = Post::findOrFail($id);
+
+        $post->update([
+            'title' => $request->title
+        ]);
+
+        return response()->json([
+            'message' => 'Title updated successfully',
+            'title' => $post->title
+        ]);
     }
 
     public function destroy($id)
